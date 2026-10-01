@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.venv/
+build/
+dist/
+
+# The conformance corpus is fetched at run time and never vendored here.
+# It belongs to probityai/agent-evidence-vectors and the independence of this
+# reader depends on not shipping it.
+corpus/
+*.txt
