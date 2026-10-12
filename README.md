@@ -1,27 +1,31 @@
-# An independent verifier for draft-gilda-wimse-agent-audit-record-01
+# An independent verifier for draft-gilda-wimse-agent-audit-record-02
 
 A second implementation of the agent audit record, written from the draft text.
 
 Its purpose is narrow. A specification with one implementation and one conformance
 corpus written beside it cannot tell you whether the text is sufficient, because
 neither the reader nor the vectors can see what the author assumed. This reader was
-written from `draft-gilda-wimse-agent-audit-record-01`, RFC 8785, RFC 7493 and DSSE,
+written from `draft-gilda-wimse-agent-audit-record-02`, RFC 8785, RFC 7493 and DSSE,
 and shares no code with the reference verifier, the reference canonicaliser or the
 reference DSSE library.
 
 ## Result
 
-Against `probityai/agent-evidence-vectors`, corpus `vectors-agent-audit-record`,
-47 members:
+Against `probityai/agent-evidence-vectors`, corpus `vectors-agent-audit-record`
+at `0.17.5`, `corpusDigest` `048ddde8`, 55 members:
 
 | | corpus | this reader |
 |---|---|---|
-| accept | 9 valid | 9 valid |
-| reject | 36 malformed | 36 malformed |
+| accept | 11 valid | 11 valid |
+| reject | 42 malformed | 42 malformed |
 | indeterminate | each lists its conforming readings | both reached `valid`, a listed reading for each |
 
-47 of 47 agree. See `FINDINGS.md` for what the exercise surfaced, including two
-vectors that caught this reader and one requirement the draft does not define.
+55 of 55 agree.
+
+`FINDINGS.md` records the earlier run: 47 of 47 at corpus `0.16.0` against
+`-01`, including two vectors that caught this reader and one requirement the
+draft does not define. It is kept as written rather than restated, because it
+is a dated result.
 
 ## Running it
 
@@ -43,7 +47,7 @@ Ed25519 over the DSSE pre-authentication encoding of the canonical bytes, the
 RFC 7493 JSON profile (duplicate member names, nesting depth, safe-integer bound),
 and in-toto statement shape.
 
-**Members.** All sixteen predicate members present unless conditional, every value
+**Members.** All seventeen predicate members present unless conditional, every value
 inside the closed vocabulary its member declares, and the conditional rules of
 sections 5.2 to 5.5.
 

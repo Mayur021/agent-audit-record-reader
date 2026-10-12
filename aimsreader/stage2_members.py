@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage 2: membership and closed vocabularies, from draft-01 sections 5.1-5.5.
+"""Stage 2: membership and closed vocabularies, from draft-02 sections 5.1-5.7.
 
 Runs only on statements stage 1 opened. Recomputes (stage 3) and tier derivation
 (stage 4) are not here. Written from the draft text, not the reference reader.
@@ -9,9 +9,12 @@ import json, sys
 from pathlib import Path
 from aimsreader.envelope_reader import read as envelope_read
 
+# Section 4: "Seventeen required predicate members and one optional member are
+# defined in Section 5." The optional member is oversight (5.5). No member has a
+# default and a verifier MUST NOT supply one for an absent member (F1, EV3).
 MEMBERS = ["recordId","tier","hashAlgorithm","agent","delegation","resource",
-           "decision","effect","agreement","correlation","posture","remediation",
-           "observation","fieldEvidence","doesNotAssert","issuedAt"]
+           "decision","effect","evaluation","agreement","correlation","posture",
+           "remediation","observation","fieldEvidence","doesNotAssert","issuedAt"]
 
 VOCAB = {
  ("agent","authentication"): {"wimse-wpt","http-message-signature","mtls","oauth-access-token","none"},
@@ -25,6 +28,7 @@ VOCAB = {
  ("posture","reported"): {"no_network","allowlist","sinkhole","unsafe_bypass_egress"},
  ("posture","observed"): {"no_network","allowlist","sinkhole","unsafe_bypass_egress"},
  ("observation","vantage"): {"below-observed","peer","self"},
+ ("evaluation","status"): {"evaluated","not-evaluated"},
 }
 TOP_VOCAB = {
  "agreement": {"agree","disagree","not-exercised","indeterminate","one-sided"},
@@ -36,6 +40,13 @@ REM_CAUSE = {"session-revoked","risk-elevated","subject-disabled",
 REM_ENF = {"access-attenuated","session-terminated","tokens-discarded",
            "privileges-reduced","reevaluated","not-enforced"}
 FE_VALUES = {"substrate-covered","producer-asserted"}
+# 5.4: "from the closed set standing-source, key-source, consumption-state"
+UNAVAILABLE_INPUT = {"standing-source","key-source","consumption-state"}
+# 5.5: "one of observation, check, decision, release"
+OVERSIGHT_ACTS = {"observation","check","decision","release"}
+# 5.5: "No other member is defined, and a verifier MUST reject an oversight
+# member carrying one."
+OVERSIGHT_DEFINED = {"act","recordDigest"}
 GLOB = set("*?[]{}")
 
 def check(pred: dict):
@@ -133,6 +144,52 @@ def check(pred: dict):
         if isinstance(obs, dict) and obs.get("vantage") == "self":
             if any(v == "substrate-covered" for v in fe.values()):
                 f.append("substrate-covered-while-vantage-self")
+
+    # 5.4 evaluation. Under not-evaluated the member MUST carry
+    # unavailableInput, "a non-empty array naming each input the decision point
+    # could not obtain, each at most once", from the closed set. Under
+    # evaluated it MUST NOT carry unavailableInput "in any spelling".
+    # Status not-evaluated is never itself a reason to reject.
+    ev = pred.get("evaluation")
+    if isinstance(ev, dict):
+        st = ev.get("status")
+        spellings = [k for k in ev if k.lower() == "unavailableinput"]
+        if st == "not-evaluated":
+            if "unavailableInput" not in ev:
+                f.append("not-evaluated-without-unavailableInput")
+            else:
+                ui = ev["unavailableInput"]
+                if not isinstance(ui, list):
+                    f.append(f"unavailableInput-not-an-array:{type(ui).__name__}")
+                elif not ui:
+                    f.append("unavailableInput-empty")
+                else:
+                    seen = set()
+                    for i, x in enumerate(ui):
+                        if x in seen:
+                            f.append(f"unavailableInput-repeated:{x!r}")
+                        seen.add(x)
+                        if x not in UNAVAILABLE_INPUT:
+                            f.append(f"vocabulary:evaluation.unavailableInput[{i}]={x!r}")
+        elif st == "evaluated":
+            for k in spellings:
+                f.append(f"evaluated-carries-unavailableInput:{k!r}")
+
+    # 5.5 oversight, the one optional member. act is required inside it and
+    # closed; recordDigest is optional and a verifier does not resolve it; no
+    # other member is defined.
+    ov = pred.get("oversight")
+    if ov is not None:
+        if not isinstance(ov, dict):
+            f.append(f"oversight-not-an-object:{type(ov).__name__}")
+        else:
+            if "act" not in ov:
+                f.append("member-absent:oversight.act")
+            elif ov["act"] not in OVERSIGHT_ACTS:
+                f.append(f"vocabulary:oversight.act={ov['act']!r}")
+            for k in ov:
+                if k not in OVERSIGHT_DEFINED:
+                    f.append(f"oversight-undefined-member:{k!r}")
 
     # 5.1 issuedAt at or after interval sealedAt
     ia = pred.get("issuedAt")
