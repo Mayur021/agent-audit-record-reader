@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # agent-evidence-vectors is pinned exactly rather than floored. A bump PR
+    # here is a signal that a new corpus shipped, not a change to merge on its
+    # own: the README records 68 of 68 against the corpus at 17213cfb, so the
+    # reader has to be re-run and that line restated before the pin moves.
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"

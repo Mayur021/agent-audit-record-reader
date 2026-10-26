@@ -8,7 +8,11 @@ license = { text = "Apache-2.0" }
 dependencies = ["cryptography>=41.0"]
 
 [project.optional-dependencies]
-test = ["pytest>=7.0"]
+# Pinned exactly, not floored. 0.18.1 is the release whose audit-record corpus
+# matches what fetch_corpus.sh pulls at 17213cfb, which is the corpus the 68 of
+# 68 in README.md was recorded against. A bump is a prompt to re-run the reader
+# and restate that line, never something to merge on its own.
+test = ["pytest>=7.0", "agent-evidence-vectors==0.18.1"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
