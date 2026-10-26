@@ -12,6 +12,10 @@ dependencies = ["cryptography>=41.0"]
 # matches what fetch_corpus.sh pulls at 17213cfb, which is the corpus the 68 of
 # 68 in README.md was recorded against. A bump is a prompt to re-run the reader
 # and restate that line, never something to merge on its own.
+#
+# Note: 0.18.1 declares Requires-Python >=3.12, so this extra will not
+# install below 3.12 even though the reader itself runs on 3.9. The floor
+# above is the reader's, not the corpus's.
 test = ["pytest>=7.0", "agent-evidence-vectors==0.18.1"]
 
 [tool.pytest.ini_options]
